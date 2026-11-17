@@ -8,7 +8,7 @@ Built at Agent Harness Build Night (Tokyo, 2026-11-17).
 
 [![Trend Recall demo](demo.gif)](demo.mp4)
 
-[Watch the 40 second demo with full quality](demo.mp4). It opens the app, shows the spoken request as text, searches the shops live, shows three picks worn by the shopper, and confirms one. The face in the demo is an AI-generated stand-in.
+[Watch the 30 second demo with full quality](demo.mp4). It opens the app, shows the spoken request as text, searches the shops live, shows three picks worn by the shopper, and confirms one. The face in the demo is an AI-generated stand-in.
 
 ## What happens
 
