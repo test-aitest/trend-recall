@@ -30,6 +30,8 @@
 #s1 .count{position:absolute;left:6vw;top:46vh}
 #s1 .dot{display:inline-block;width:.7vw;height:.7vw;border-radius:50%;background:var(--pick);margin-right:.8vw;animation:pulse 1s ease-in-out infinite}
 @keyframes pulse{50%{opacity:.25}}
+#heard{display:none;position:absolute;left:6vw;right:6vw;bottom:40vh;text-align:center;font-size:3.4vw;line-height:1.15;text-shadow:0 2px 18px rgba(0,0,0,.6)}
+body.demo #heard{display:block}
 #dress{position:absolute;left:50%;top:20vh;transform:translateX(-50%);display:flex;gap:1.4vw;opacity:0;transition:opacity .6s}
 #dress.on,#dresslabel.on{opacity:1}
 #dress i{width:9vw;aspect-ratio:3/4;border-radius:.8vw;border:.1vw solid rgba(255,255,255,.5);background:linear-gradient(100deg,rgba(255,255,255,.06) 30%,rgba(255,255,255,.34) 50%,rgba(255,255,255,.06) 70%);background-size:300% 100%;animation:shimmer 1.4s linear infinite;transition:background-color .5s}
@@ -84,6 +86,7 @@
 <section class="stage" id="s1"><div class="bg" style="background-image:url(photos/hero.jpg);filter:blur(14px) brightness(.5);transform:scale(1.1)"></div>
   <div class="tiny tr" id="status">Listening</div>
   <video id="cam" autoplay playsinline muted></video>
+  <div class="serif" id="heard"></div>
   <div id="dress"><i></i><i></i><i></i></div><div class="tiny" id="dresslabel"></div>
   <div class="river" id="river"></div></section>
 
@@ -151,14 +154,17 @@ async function dressThenShow(minWait){
   }
   setTimeout(()=>{ clearInterval(pump); $("dress").classList.remove("on"); $("dresslabel").classList.remove("on"); showPicks(); }, Math.max(0,minWait-(performance.now()-started)));
 }
+const DEMO=new URLSearchParams(location.search).get("demo"); if(DEMO) document.body.classList.add("demo");
 let wanted="";
 function startTalking(g){
+  $("heard").textContent="";
   wanted=typeof g==="string"?g:"";
   startCamera();
   typed=""; $("river").innerHTML=""; $("status").textContent="Listening"; go(1);
-  recog=listen(()=>{}, t=>search(t));
+  recog=listen(t=>{ if(DEMO) $("heard").textContent="“"+t+"”"; }, t=>search(t));
 }
 function search(q){
+  if(DEMO) $("heard").textContent="“"+q+"”";
   if(recog){try{recog.abort()}catch{} recog=null}
   $("status").textContent="Searching live";
   const t0=performance.now(); let shops=0, pieces=0, total=4, finished=false; queue=[];
@@ -178,7 +184,7 @@ function showPicks(){
   document.querySelectorAll(".pane").forEach((p,i)=>{ const it=picks[i]; if(!it){p.style.visibility="hidden";return} p.style.visibility="";
     p.querySelector(".bg").style.backgroundImage=`url("${mine[i]||it.img}")`; p.querySelector(".badge").classList.toggle("ready",!!mine[i]);
     p.querySelector(".cap").innerHTML=`${it.name} · ${it.shop} · ${yen(it.price)}<br><span class="why">${it.why}</span>`; });
-  const auto=new URLSearchParams(location.search).get("auto"); if(auto){ setTimeout(()=>choose(0),1500); if(auto==="2") setTimeout(confirmBuy,4000); }
+  const auto=new URLSearchParams(location.search).get("auto"); if(auto){ const film=new URLSearchParams(location.search).get("film"); setTimeout(()=>choose(0),film?4000:1500); if(auto==="2") setTimeout(()=>{ if(!film) return confirmBuy(); const t0=performance.now(); const h=setInterval(()=>{ const r=Math.min(1,(performance.now()-t0)/1300); $("fill").style.width=r*100+"%"; if(r>=1){clearInterval(h);confirmBuy()} },30); },film?9000:4000); }
   go(2); say(`I found ${picks.length} for you. ${picks.map(p=>p.why.split(" · ")[0]).join(". ")}.`);
 }
 function choose(i){
@@ -216,5 +222,8 @@ const q=new URLSearchParams(location.search).get("q");
 if(new URLSearchParams(location.search).get("dress")) window.FAKE_DRESS=true;
 const camTest=new URLSearchParams(location.search).get("cam");
 wanted=new URLSearchParams(location.search).get("g")||"";
-if(camTest){ go(1); startCamera(); if(q){ const t0=performance.now(); const wait=setInterval(()=>{ if(selfie||performance.now()-t0>20000){ clearInterval(wait); search(q); } },200); } } else if(q){ go(1); search(q); } else go(0);
+const film=new URLSearchParams(location.search).get("film");
+if(film){ go(0); fetch(film).then(r=>r.blob()).then(b=>new Promise(res=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(b); })).then(d=>{ selfie=d; });
+  setTimeout(()=>{ $("heard").textContent=""; $("status").textContent="Listening"; go(1); let k=0; const ty=setInterval(()=>{ k++; $("heard").textContent="“"+q.slice(0,k)+"”"; if(k>=q.length){ clearInterval(ty); setTimeout(()=>search(q),700); } },55); },4000); }
+else if(camTest){ go(1); startCamera(); if(q){ const t0=performance.now(); const wait=setInterval(()=>{ if(selfie||performance.now()-t0>20000){ clearInterval(wait); search(q); } },200); } } else if(q){ go(1); search(q); } else go(0);
 </script></body></html>

@@ -44,6 +44,8 @@ body{background:var(--bg);color:var(--fg);font-family:Inter,"Hiragino Sans",syst
 #s1 .count{position:absolute;left:6cqw;top:46cqh}
 #s1 .dot{display:inline-block;width:.7cqw;height:.7cqw;border-radius:50%;background:var(--pick);margin-right:.8cqw;animation:pulse 1s ease-in-out infinite}
 @keyframes pulse{50%{opacity:.25}}
+#heard{display:none;position:absolute;left:6cqw;right:6cqw;bottom:40cqh;text-align:center;font-size:3.4cqw;line-height:1.15;text-shadow:0 2px 18px rgba(0,0,0,.6)}
+body.demo #heard{display:block}
 #dress{position:absolute;left:50%;top:20cqh;transform:translateX(-50%);display:flex;gap:1.4cqw;opacity:0;transition:opacity .6s}
 #dress.on,#dresslabel.on{opacity:1}
 #dress i{width:9cqw;aspect-ratio:3/4;border-radius:.8cqw;border:.1cqw solid rgba(255,255,255,.5);background:linear-gradient(100deg,rgba(255,255,255,.06) 30%,rgba(255,255,255,.34) 50%,rgba(255,255,255,.06) 70%);background-size:300% 100%;animation:shimmer 1.4s linear infinite;transition:background-color .5s}
@@ -101,6 +103,7 @@ body{background:var(--bg);color:var(--fg);font-family:Inter,"Hiragino Sans",syst
 <section class="stage" id="s1"><div class="bg" style="background-image:url(photos/hero.jpg);filter:blur(14px) brightness(.5);transform:scale(1.1)"></div>
   <div class="tiny tr" id="status">Listening</div>
   <video id="cam" autoplay playsinline muted></video>
+  <div class="serif" id="heard"></div>
   <div id="dress"><i></i><i></i><i></i></div><div class="tiny" id="dresslabel"></div>
   <div class="river" id="river"></div></section>
 
@@ -181,8 +184,10 @@ async function dressThenShow(minWait){
   }
   setTimeout(()=>{ clearInterval(pump); $("dress").classList.remove("on"); $("dresslabel").classList.remove("on"); showPicks(); }, Math.max(0,minWait-(performance.now()-started)));
 }
+const DEMO=new URLSearchParams(location.search).get("demo"); if(DEMO) document.body.classList.add("demo");
 let wanted="";
 function startTalking(g){
+  $("heard").textContent="";
   wanted=typeof g==="string"?g:"";
 
   typed=""; $("river").innerHTML=""; $("status").textContent="Listening"; go(1);

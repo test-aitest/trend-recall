@@ -4,6 +4,10 @@ Say what you want to wear. Trend Recall searches real fashion shops live with a 
 
 Built at Agent Harness Build Night (Tokyo, 2026-11-17).
 
+## Demo
+
+[Watch the 40 second demo](demo.mp4). It opens the app, shows the spoken request as text, searches the shops live, shows three picks worn by the shopper, and confirms one. The face in the demo is an AI-generated stand-in.
+
 ## What happens
 
 1. Tap **Women** or **Men** and say what you want, for example "a black puffer jacket under ten thousand yen".

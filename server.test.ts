@@ -100,3 +100,8 @@ test("a shop learned from an English search is searched with the English word", 
   expect(routeScript(route, "コート", "ブラック")).toContain("https://x.jp/search?q=coat");
   expect(routeScript({ ...route, english: false }, "コート", "ブラック")).toContain(encodeURIComponent("コート"));
 });
+
+test("reads small number words as a budget", () => {
+  expect(parseQuery("a black hoodie under eight thousand yen").budget).toBe(8000);
+  expect(parseQuery("a coat under twelve thousand yen").budget).toBe(12000);
+});

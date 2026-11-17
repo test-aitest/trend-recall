@@ -116,13 +116,13 @@ const ENGLISH: [RegExp, string, string][] = [
   [/bag/i, "バッグ", "Bag"],
   [/vest|gilet/i, "ベスト", "Vest"],
 ];
-const WORDS: Record<string, number> = { five: 5, ten: 10, fifteen: 15, twenty: 20, thirty: 30, fifty: 50 };
+const WORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, twelve: 12, fifteen: 15, twenty: 20, thirty: 30, forty: 40, fifty: 50 };
 const YEN_PER_DOLLAR = 150;
 
 export function parseQuery(q: string) {
   let budget = 0;
   const dollars = q.match(/\$\s?([\d,]+)|([\d,]+)\s*(dollars|bucks|usd)/i);
-  const thousand = q.match(/([\d.]+|five|ten|fifteen|twenty|thirty|fifty)\s*(thousand|k\b)/i);
+  const thousand = q.match(/([\d.]+|one|two|three|four|five|six|seven|eight|nine|ten|twelve|fifteen|twenty|thirty|forty|fifty)\s*(thousand|k\b)/i);
   const man = q.match(/(\d+(?:\.\d+)?)\s*万/);
   const plain = q.match(/([\d,]{4,})/);
   if (dollars) budget = Number((dollars[1] ?? dollars[2]).replace(/,/g, "")) * YEN_PER_DOLLAR;
