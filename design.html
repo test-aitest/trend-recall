@@ -1,0 +1,245 @@
+<title>Trend Recall</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mrs+Saint+Delafield&family=Instrument+Serif&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* layout: one live 16:9 app screen on top, short notes under it */
+:root{--bg:#f5f5f7;--fg:#15161b;--muted:#666a76;--rule:#dcdde4;--ink:#fff;--pick:#f5a524;--paper:#f6f3ea;--navy:#141a2b;--stage:#0c0d10;--label:#6c7080;--track:#d9dde6}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--bg:#0f1014;--fg:#f0f0f4;--muted:#9da1af;--rule:#2a2d37;color-scheme:dark} }
+:root[data-theme="dark"]{--bg:#0f1014;--fg:#f0f0f4;--muted:#9da1af;--rule:#2a2d37;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:Inter,"Hiragino Sans",system-ui,sans-serif;font-size:15px;line-height:1.65;padding-block:24px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:26px}
+.wrap h1{font:400 clamp(30px,5vw,44px)/1.05 "Instrument Serif",serif;margin:0}
+.wrap h2{font-weight:600;font-size:19px;margin:0 0 10px}
+.eyebrow{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.lead{color:var(--muted);max-width:66ch;margin:8px 0 0}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+.notes div{min-width:0;border-top:1px solid var(--fg);padding-top:10px}
+.notes h3{font-weight:600;font-size:16px;margin:0 0 4px}
+.notes p{margin:0;color:var(--muted);font-size:14px}
+.app{aspect-ratio:16/9;max-width:100%;container-type:size;position:relative;overflow:hidden;border-radius:12px;background:var(--stage);color:var(--ink);user-select:none;cursor:default}
+.app *{box-sizing:border-box}
+
+.stage{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .9s ease}
+.stage.on{opacity:1;pointer-events:auto;z-index:2}
+.stage.under{opacity:1;transition:none;z-index:1}
+.bg{position:absolute;inset:0;background-size:cover;background-position:center}
+.hero{width:100%;height:100%;object-fit:cover}
+.shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.05) 40%,rgba(0,0,0,.6))}
+.script{font-family:"Mrs Saint Delafield",cursive;line-height:.9;text-shadow:0 2px 24px rgba(0,0,0,.45)}
+.tiny{font-size:.78cqw;letter-spacing:.24em;text-transform:uppercase}
+.tr{position:absolute;top:4cqw;right:2.6cqw}
+.serif{font-family:"Instrument Serif","Hiragino Mincho ProN",serif}
+
+#s0 .script{position:absolute;left:0;right:0;bottom:29cqh;text-align:center;font-size:6.6cqw;line-height:1;text-shadow:0 2px 22px rgba(0,0,0,.8),0 0 5px rgba(0,0,0,.55)}
+#s0 .shade{background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.05) 42%,rgba(0,0,0,.62) 78%,rgba(0,0,0,.72))}
+.talks{position:absolute;left:50%;bottom:9cqh;transform:translateX(-50%);display:flex;gap:7cqw}
+.talk{display:flex;flex-direction:column;align-items:center;gap:1.2cqh;cursor:pointer}
+.hint{position:absolute;left:0;right:0;bottom:4cqh;text-align:center;font-size:.62cqw}
+.ring{width:5.6cqw;height:5.6cqw;border-radius:50%;border:.12cqw solid var(--ink);display:grid;place-items:center;background:rgba(255,255,255,.14);backdrop-filter:blur(8px);position:relative;transition:background .2s}
+.ring::after{content:"";position:absolute;inset:-.7cqw;border-radius:50%;border:.08cqw solid rgba(255,255,255,.55);animation:halo 2.2s ease-out infinite}
+@keyframes halo{from{transform:scale(.9);opacity:.9}to{transform:scale(1.35);opacity:0}}
+.talk:hover .ring{background:rgba(255,255,255,.3)}
+.ring svg{width:2.3cqw;height:2.3cqw}
+
+#s1 .count{position:absolute;left:6cqw;top:46cqh}
+#s1 .dot{display:inline-block;width:.7cqw;height:.7cqw;border-radius:50%;background:var(--pick);margin-right:.8cqw;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25}}
+#dress{position:absolute;left:50%;top:20cqh;transform:translateX(-50%);display:flex;gap:1.4cqw;opacity:0;transition:opacity .6s}
+#dress.on,#dresslabel.on{opacity:1}
+#dress i{width:9cqw;aspect-ratio:3/4;border-radius:.8cqw;border:.1cqw solid rgba(255,255,255,.5);background:linear-gradient(100deg,rgba(255,255,255,.06) 30%,rgba(255,255,255,.34) 50%,rgba(255,255,255,.06) 70%);background-size:300% 100%;animation:shimmer 1.4s linear infinite;transition:background-color .5s}
+#dress i.done{animation:none;background:rgba(255,255,255,.88);border-color:var(--ink)}
+@keyframes shimmer{from{background-position:100% 0}to{background-position:-100% 0}}
+#dresslabel{position:absolute;left:0;right:0;top:calc(20cqh + 12cqw + 3cqh);text-align:center;opacity:0;transition:opacity .6s}
+@media (prefers-reduced-motion: reduce){#dress i{animation:none}}
+.river{position:absolute;left:0;right:0;bottom:6cqh;height:30cqh;overflow:hidden}
+.river figure{position:absolute;bottom:0;height:100%;aspect-ratio:3/4;margin:0;animation:flow 5.2s linear forwards}
+.river img{width:100%;height:100%;object-fit:cover;border-radius:.8cqw;box-shadow:0 1cqw 2.4cqw rgba(0,0,0,.4);display:block}
+.river figcaption{position:absolute;left:.8cqw;bottom:.8cqw;font-size:.66cqw;letter-spacing:.2em;text-transform:uppercase;text-shadow:0 1px 6px #000}
+@keyframes flow{from{transform:translateX(104cqw) rotate(var(--r))}to{transform:translateX(-30cqw) rotate(var(--r))}}
+
+#note{position:fixed;top:4cqw;right:2.6cqw;z-index:5;opacity:0;transition:opacity .5s;text-shadow:0 1px 8px rgba(0,0,0,.7);pointer-events:none}
+#note.on{opacity:1}
+#s2{display:grid;grid-template-columns:repeat(3,1fr);gap:.25cqw;background:var(--stage)}
+.pane{position:relative;overflow:hidden;transform:translateY(8%);opacity:0;transition:transform 1s cubic-bezier(.2,.7,.2,1),opacity 1s}
+#s2.on .pane{transform:none;opacity:1}
+#s2.on .pane:nth-child(2){transition-delay:.15s}#s2.on .pane:nth-child(3){transition-delay:.3s}
+.pane .bg{transition:transform 1.4s ease;background-position:center 20%}
+.pane:hover .bg{transform:scale(1.05)}
+.pane .cap{position:absolute;left:1.6cqw;right:1.6cqw;bottom:5cqh;line-height:1.9;letter-spacing:.14em}
+.pane .why{color:var(--pick)}
+.pane .badge{position:absolute;left:1.6cqw;top:4cqw;opacity:0;transition:opacity .8s}
+.pane .badge.ready{opacity:1}
+#cam{position:absolute;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none}
+#s2 .script{position:absolute;left:0;right:0;top:56cqh;text-align:center;font-size:8.5cqw;pointer-events:none}
+#s2 .stat{position:absolute;right:2.6cqw;top:4cqw;text-shadow:0 1px 8px #000}
+
+#s3 .bg,#s4 .bg{animation:drift 14s ease-in-out infinite alternate;background-position:center 20%}
+@keyframes drift{from{transform:scale(1.02)}to{transform:scale(1.09)}}
+.tag{position:absolute;left:8cqw;bottom:12cqh;width:36cqw;background:var(--paper);color:var(--navy);border-radius:1.2cqw;padding:2.4cqw 2.6cqw;transform:rotate(-2deg) translateY(140%);transition:transform 1s cubic-bezier(.2,.7,.2,1) .3s;box-shadow:0 2cqw 4cqw rgba(0,0,0,.4)}
+#s3.on .tag{transform:rotate(-2deg)}
+.tag h4{font:400 2.6cqw/1.1 "Instrument Serif","Hiragino Mincho ProN",serif;margin:0 0 1.4cqw;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.kv{display:grid;grid-template-columns:repeat(4,auto);gap:.4cqw 2cqw;font-size:1.05cqw;font-weight:500}
+.kv small{display:block;font-size:.6cqw;letter-spacing:.2em;text-transform:uppercase;color:var(--label);font-weight:400}
+.fill{height:.25cqw;background:var(--track);border-radius:1cqw;margin-top:1.8cqw;overflow:hidden}
+.fill i{display:block;height:100%;width:0;background:var(--navy)}
+.tag .tiny{margin-top:.9cqw;color:var(--label);font-size:.62cqw}
+#s3 .ask{position:absolute;right:6cqw;bottom:14cqh;max-width:34cqw;font-size:2.4cqw;line-height:1.2;text-align:right;text-shadow:0 2px 16px rgba(0,0,0,.6)}
+#s3 .ask span{color:var(--pick)}
+#s4 .script{position:absolute;left:6cqw;top:22cqh;font-size:11cqw}
+#s4 .rem{position:absolute;left:6cqw;bottom:10cqh}
+</style>
+<div class="wrap">
+<header><div class="eyebrow">Agent Harness Build Night · 11/17 19:55 時点</div><h1>Trend Recall</h1>
+<p class="lead">欲しい服を英語で話すと、Lightpanda が実際の店を同時に開いて探し、自分の顔で着た候補を 3 つ出すアプリです。下は画面の見本で、マイクの輪を押すと進みます。このページの中では検索・マイク・カメラを動かせないので、写真と結果は固定です。本物は手元の http://localhost:4477/ で動いています。</p></header>
+<div class="app">
+<div class="tiny" id="note"></div>
+<section class="stage" id="s0"><video class="bg hero" src="photos/hero-loop.mp4" poster="photos/hero.jpg" autoplay loop muted playsinline></video><div class="shade"></div>
+  <div class="script">Every look begins<br>long before you dress.</div>
+  <div class="talks"><div class="talk" data-g="women"><span class="ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><span class="tiny">Women</span></div><div class="talk" data-g="men"><span class="ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><span class="tiny">Men</span></div></div>
+  <div class="tiny hint">Tap one and say what you want</div></section>
+
+<section class="stage" id="s1"><div class="bg" style="background-image:url(photos/hero.jpg);filter:blur(14px) brightness(.5);transform:scale(1.1)"></div>
+  <div class="tiny tr" id="status">Listening</div>
+  <video id="cam" autoplay playsinline muted></video>
+  <div id="dress"><i></i><i></i><i></i></div><div class="tiny" id="dresslabel"></div>
+  <div class="river" id="river"></div></section>
+
+<section class="stage" id="s2">
+  <div class="pane" data-i="0"><div class="bg"></div><div class="shade"></div><div class="badge tiny">On you</div><div class="cap tiny"></div></div>
+  <div class="pane" data-i="1"><div class="bg"></div><div class="shade"></div><div class="badge tiny">On you</div><div class="cap tiny"></div></div>
+  <div class="pane" data-i="2"><div class="bg"></div><div class="shade"></div><div class="badge tiny">On you</div><div class="cap tiny"></div></div>
+  <div class="script">What to wear?</div></section>
+
+<section class="stage" id="s3"><div class="bg" id="bg3"></div><div class="shade"></div>
+  <div class="tiny tr">Held for 10 min · nothing bought yet</div>
+  <div class="ask serif" id="ask"></div>
+  <div class="tag"><h4 id="tname"></h4>
+    <div class="kv"><div><small>Shop</small><span id="tshop"></span></div><div><small>Color</small><span id="tcolor"></span></div><div><small>Size</small><span id="tsize"></span></div><div><small>Price</small><span id="tprice"></span></div></div>
+    <div class="fill"><i id="fill"></i></div><div class="tiny">Press and hold anywhere</div></div></section>
+
+<section class="stage" id="s4"><div class="bg" id="bg4"></div><div class="shade"></div>
+  <div class="tiny tr">Confirmed · remembered for next time</div>
+  <div class="script">See you Saturday.</div>
+  <div class="rem tiny" id="rem"></div></section>
+</div>
+<section><h2>いまの状態</h2><div class="notes">
+<div><h3>動いている</h3><p>英語の声の入力、6 か所の同時検索（WEAR のコーデと商品の男女、ZARA の男女）、色を言えばその色で探す、候補 3 枚、色とサイズの会話、長押しで決めて好みを覚える。5 つの画面すべてを描画して確かめ、検索の計算は単体テスト 16 本が通っています。</p></div>
+<div><h3>店を覚える</h3><p>始まりの画面で、店の検索結果のアドレスを貼り付けると、Lightpanda がその店を読めるか確かめ、読めたら探し方を保存します。次の検索からその店も AI なしで同時に探します。読めない店と、検索結果でないページは断ります。</p></div>
+<div><h3>顔で着せる</h3><p>話している間にカメラが裏で顔を 1 枚撮り、候補 3 着を自分が着た写真に作り替えてから出す流れまで入れました。画像を作るモデルの鍵がまだ無いので、生成そのものは未確認で、いまは店の写真で出ます。</p></div>
+<div><h3>まだ無い</h3><p>実際の注文、AI が探し方を見つけて直す部分、Neo4j、英語圏の店。声とカメラは実際のマイクとカメラでは未確認です。</p></div>
+</div></section>
+<section><h2>決まったこと</h2><div class="notes">
+<div><h3>見た目</h3><p>GoodTravel と同じ組み立て。ボタンは置かず、始まりにマイクの輪だけ。青い球、色とサイズの表、裏側の比較画面、速さの数字の行、話した言葉の表示は無し。</p></div>
+<div><h3>流れ</h3><p>話す（同時に顔を撮る）→ 見つけた服が流れる → 自分が着た候補 3 枚 → 色とサイズは会話で → 買うと決めた服の写真を背景に長押し。</p></div>
+<div><h3>言葉と対象</h3><p>グローバル向けに画面も声も英語。レディースとメンズの両方で、「men's」と言えばその側だけ探します。</p></div>
+<div><h3>写真</h3><p>この見本の写真は Unsplash の無料写真です。本物では各店の商品写真か、自分が着た写真が出ます。</p></div>
+</div></section>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const yen=n=>"¥"+Number(n).toLocaleString();
+let stage=-1, picks=[], parsed={}, memory={}, chosen=null, size="M", color="", recog=null, queue=[], pump=null, typed="";
+function go(n){ const all=[...document.querySelectorAll(".stage")], prev=all[stage]; stage=n; all.forEach((s,i)=>{ s.classList.remove("under"); if(i!==n&&s!==prev) s.classList.remove("on"); });
+  if(prev&&prev!==all[n]){ prev.classList.remove("on"); prev.classList.add("under"); setTimeout(()=>prev.classList.remove("under"),1000); } all[n].classList.add("on"); }
+function say(text){ return; try{ const u=new SpeechSynthesisUtterance(text); u.lang="en-US"; u.rate=1.02; speechSynthesis.cancel(); speechSynthesis.speak(u);}catch{} }
+function listen(onText,onFinal){
+  const R=window.SpeechRecognition||window.webkitSpeechRecognition; if(!R) return null;
+  const r=new R(); r.lang="en-US"; r.interimResults=true; r.continuous=false; let last="", done=false;
+  r.onresult=e=>{ last=[...e.results].map(x=>x[0].transcript).join(""); onText(last); if(e.results[e.results.length-1].isFinal&&!done){done=true;onFinal(last)} };
+  r.onend=()=>{ if(!done&&last){done=true;onFinal(last)} };
+  try{r.start()}catch{} return r;
+}
+let selfie="", camStream=null, mine=[];
+async function startCamera(){
+  if(!navigator.mediaDevices) return;
+  selfie="";
+  try{ if(!camStream){ camStream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:640,facingMode:"user"}}); $("cam").srcObject=camStream; } watchFace(); }catch{}
+}
+function watchFace(){
+  const v=$("cam"), det=window.FaceDetector?new FaceDetector({fastMode:true,maxDetectedFaces:1}):null, t0=performance.now();
+  const loop=async()=>{ if(selfie||stage!==1) return; if(!v.videoWidth){ setTimeout(loop,150); return; }
+    let ok=!det&&performance.now()-t0>1200; if(det){ try{ ok=(await det.detect(v)).length>0 }catch{ ok=performance.now()-t0>1200 } }
+    if(ok) snap(); else setTimeout(loop,200); };
+  loop();
+}
+function snap(){ const v=$("cam"); if(!v.videoWidth) return; const s=Math.min(v.videoWidth,v.videoHeight), c=document.createElement("canvas"); c.width=c.height=512;
+  c.getContext("2d").drawImage(v,(v.videoWidth-s)/2,(v.videoHeight-s)/2,s,s,0,0,512,512); selfie=c.toDataURL("image/jpeg",.85); }
+async function tryOn(i){
+  const it=picks[i]; if(!selfie||!it) return;
+  try{ const r=await fetch("/api/tryon",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({selfie,img:it.img,name:it.name})}); if(!r.ok) return; const d=await r.json(); if(d.image&&picks[i]===it) mine[i]=d.image; }catch{}
+}
+async function dressThenShow(minWait){
+  mine=[]; if(!selfie) snap();
+  const started=performance.now(), fake=window.FAKE_DRESS;
+  if((selfie||fake)&&picks.length){
+    let done=0; const cards=[...$("dress").children]; cards.forEach((c,i)=>{ c.classList.remove("done"); c.hidden=i>=picks.length; });
+    const label=()=>$("dresslabel").textContent=`Dressing you · ${done} of ${picks.length}`; label();
+    $("status").textContent="Dressing you"; $("dress").classList.add("on"); $("dresslabel").classList.add("on");
+    const one=i=>(fake?new Promise(r=>setTimeout(r,1100+i*800)):tryOn(i)).then(()=>{ done++; cards[i].classList.add("done"); label(); });
+    await Promise.race([Promise.allSettled(picks.map((_,i)=>one(i))), new Promise(r=>setTimeout(r,45000))]);
+    await new Promise(r=>setTimeout(r,600));
+  }
+  setTimeout(()=>{ clearInterval(pump); $("dress").classList.remove("on"); $("dresslabel").classList.remove("on"); showPicks(); }, Math.max(0,minWait-(performance.now()-started)));
+}
+let wanted="";
+function startTalking(g){
+  wanted=typeof g==="string"?g:"";
+
+  typed=""; $("river").innerHTML=""; $("status").textContent="Listening"; go(1);
+  setTimeout(()=>search("sample"),1400);
+}
+function search(q){
+  $("status").textContent="Searching live"; queue=[];
+  const shops=["WEAR Women","WEAR Men","ZARA Woman","ZARA Man","WEAR Items Women"], prices=[7920,9900,8590,3998,12650,6999,9990,5990,8789,4595,7480,9350];
+  let n=0; clearInterval(pump);
+  pump=setInterval(()=>{ const i=n++; const f=document.createElement("figure"); f.style.setProperty("--r",((i%5)-2)*1.2+"deg");
+    const im=new Image(); im.src="photos/s"+(i%12)+".jpg"; const c=document.createElement("figcaption"); c.textContent=shops[i%5]+" · "+yen(prices[i%12]); f.append(im,c);
+    $("river").append(f); setTimeout(()=>f.remove(),5300); },330);
+  parsed={budget:10000,colorEn:"Black"}; memory={size:"M"};
+  picks=[{name:"ADAMASTE Puffer jacket",shop:"WEAR Women",price:7920,size:"M",img:"photos/c0.jpg",wide:"photos/w0.jpg",why:"Size M, like last time · worn at 166 cm"},
+         {name:"ZARA Coat",shop:"ZARA Woman",price:9990,size:"",img:"photos/c1.jpg",wide:"photos/w1.jpg",why:"Top result at ZARA Woman"},
+         {name:"KOBE LETTUCE Puffer jacket",shop:"WEAR Items Women",price:3998,size:"",img:"photos/c2.jpg",wide:"photos/w2.jpg",why:"Lowest price · ¥6,002 under budget"}];
+  window.FAKE_DRESS=true; setTimeout(()=>dressThenShow(0),2200);
+}
+function showPicks(){
+  if(!picks.length){ $("status").textContent="Nothing found · tap to try again"; return; }
+  document.querySelectorAll(".pane").forEach((p,i)=>{ const it=picks[i]; if(!it){p.style.visibility="hidden";return} p.style.visibility="";
+    p.querySelector(".bg").style.backgroundImage=`url("${mine[i]||it.img}")`; p.querySelector(".badge").classList.toggle("ready",!!mine[i]);
+    p.querySelector(".cap").innerHTML=`${it.name} · ${it.shop} · ${yen(it.price)}<br><span class="why">${it.why}</span>`; });
+  const auto=new URLSearchParams(location.search).get("auto"); if(auto){ setTimeout(()=>choose(0),1500); if(auto==="2") setTimeout(confirmBuy,4000); }
+  go(2); say(`I found ${picks.length} for you. ${picks.map(p=>p.why.split(" · ")[0]).join(". ")}.`);
+}
+function choose(i){
+  chosen=picks[i]; size=chosen.size||memory.size||"M"; color=parsed.colorEn||memory.color||"Black";
+  $("bg3").style.backgroundImage=$("bg4").style.backgroundImage=`url("${chosen.wide||chosen.img}")`;
+  $("tname").textContent=chosen.name; $("tshop").textContent=chosen.shop; $("tcolor").textContent=color; $("tsize").textContent=size; $("tprice").textContent=yen(chosen.price);
+  $("fill").style.width=0; $("ask").innerHTML=`“${color} in ${size}, like last time?”`; go(3); say(`${color} in ${size}, like last time?`);
+}
+document.querySelectorAll(".pane").forEach(p=>p.addEventListener("click",e=>{e.stopPropagation();choose(+p.dataset.i)}));
+document.querySelectorAll(".talk").forEach(t=>t.addEventListener("click",e=>{e.stopPropagation();startTalking(t.dataset.g)}));
+$("s1").addEventListener("click",()=>{ if($("status").textContent.includes("tap")) startTalking(wanted); });
+let hold=null;
+$("s3").addEventListener("pointerdown",()=>{ const t0=performance.now(); hold=setInterval(()=>{ const r=Math.min(1,(performance.now()-t0)/1300); $("fill").style.width=r*100+"%"; if(r>=1){clearInterval(hold);hold=null;confirmBuy()} },30); });
+addEventListener("pointerup",()=>{ if(hold){clearInterval(hold);hold=null; if(stage===3) $("fill").style.width=0;} });
+function confirmBuy(){
+  if(recog){try{recog.abort()}catch{}}
+  $("rem").textContent=`${chosen.name} · ${yen(chosen.price)} · Remembered: ${color}, size ${size}${parsed.budget?`, under ${yen(parsed.budget)}`:""}`;
+  go(4); say("Done. See you Saturday.");
+}
+$("s4").addEventListener("click",()=>go(0));
+addEventListener("keydown",e=>{ if(stage===0&&e.key.length===1){ startTalking(); if(recog){try{recog.abort()}catch{} recog=null} }
+  if(stage!==1) return; if(e.key==="Enter"&&typed){ search(typed); } else if(e.key==="Backspace"){ typed=typed.slice(0,-1); } else if(e.key.length===1&&!e.isComposing){ if(recog){try{recog.abort()}catch{} recog=null} typed+=e.key; } });
+let noteTimer=null;
+function note(text,stay){ $("note").textContent=text; $("note").classList.add("on"); clearTimeout(noteTimer); if(!stay) noteTimer=setTimeout(()=>$("note").classList.remove("on"),6000); }
+async function learn(url){
+  note("Learning this shop",true);
+  try{ const r=await fetch("/api/learn",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({url})}); const d=await r.json();
+    note(r.ok?`Learned ${d.shop} · ${d.pieces} pieces in ${(d.ms/1000).toFixed(1)} s · now searching ${d.total} shops`:d.error); }catch{ note("Could not reach the shop"); }
+}
+addEventListener("paste",e=>{ const t=(e.clipboardData.getData("text")||"").trim(); if(stage===0&&/^https?:\/\//.test(t)){ e.preventDefault(); learn(t); } });
+const q=new URLSearchParams(location.search).get("q");
+if(new URLSearchParams(location.search).get("dress")) window.FAKE_DRESS=true;
+const camTest=new URLSearchParams(location.search).get("cam");
+wanted=new URLSearchParams(location.search).get("g")||"";
+if(camTest){ go(1); startCamera(); if(q){ const t0=performance.now(); const wait=setInterval(()=>{ if(selfie||performance.now()-t0>20000){ clearInterval(wait); search(q); } },200); } } else if(q){ go(1); search(q); } else go(0);
+</script>

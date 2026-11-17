@@ -1,0 +1,11 @@
+.env
+.env.*
+node_modules/
+runs/
+work/
+feedback/
+memory.json
+routes.json
+preview.html
+.DS_Store
+photos/hero.mp4

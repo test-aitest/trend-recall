@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer">
+<title>Trend Recall</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mrs+Saint+Delafield&family=Instrument+Serif&family=Inter:wght@400;500&display=swap">
+<style>
+:root{--ink:#fff;--pick:#f5a524;--paper:#f6f3ea;--navy:#141a2b;--stage:#0c0d10;--label:#6c7080;--track:#d9dde6}
+*{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--stage);color:var(--ink);font-family:Inter,"Hiragino Sans",system-ui,sans-serif;overflow:hidden;cursor:default;user-select:none}
+.stage{position:fixed;inset:0;opacity:0;pointer-events:none;transition:opacity .9s ease}
+.stage.on{opacity:1;pointer-events:auto;z-index:2}
+.stage.under{opacity:1;transition:none;z-index:1}
+.bg{position:absolute;inset:0;background-size:cover;background-position:center}
+.hero{width:100%;height:100%;object-fit:cover}
+.shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.05) 40%,rgba(0,0,0,.6))}
+.script{font-family:"Mrs Saint Delafield",cursive;line-height:.9;text-shadow:0 2px 24px rgba(0,0,0,.45)}
+.tiny{font-size:.78vw;letter-spacing:.24em;text-transform:uppercase}
+.tr{position:absolute;top:4vw;right:2.6vw}
+.serif{font-family:"Instrument Serif","Hiragino Mincho ProN",serif}
+
+#s0 .script{position:absolute;left:0;right:0;bottom:29vh;text-align:center;font-size:6.6vw;line-height:1;text-shadow:0 2px 22px rgba(0,0,0,.8),0 0 5px rgba(0,0,0,.55)}
+#s0 .shade{background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.05) 42%,rgba(0,0,0,.62) 78%,rgba(0,0,0,.72))}
+.talks{position:absolute;left:50%;bottom:9vh;transform:translateX(-50%);display:flex;gap:7vw}
+.talk{display:flex;flex-direction:column;align-items:center;gap:1.2vh;cursor:pointer}
+.hint{position:absolute;left:0;right:0;bottom:4vh;text-align:center;font-size:.62vw}
+.ring{width:5.6vw;height:5.6vw;border-radius:50%;border:.12vw solid var(--ink);display:grid;place-items:center;background:rgba(255,255,255,.14);backdrop-filter:blur(8px);position:relative;transition:background .2s}
+.ring::after{content:"";position:absolute;inset:-.7vw;border-radius:50%;border:.08vw solid rgba(255,255,255,.55);animation:halo 2.2s ease-out infinite}
+@keyframes halo{from{transform:scale(.9);opacity:.9}to{transform:scale(1.35);opacity:0}}
+.talk:hover .ring{background:rgba(255,255,255,.3)}
+.ring svg{width:2.3vw;height:2.3vw}
+
+#s1 .count{position:absolute;left:6vw;top:46vh}
+#s1 .dot{display:inline-block;width:.7vw;height:.7vw;border-radius:50%;background:var(--pick);margin-right:.8vw;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25}}
+#dress{position:absolute;left:50%;top:20vh;transform:translateX(-50%);display:flex;gap:1.4vw;opacity:0;transition:opacity .6s}
+#dress.on,#dresslabel.on{opacity:1}
+#dress i{width:9vw;aspect-ratio:3/4;border-radius:.8vw;border:.1vw solid rgba(255,255,255,.5);background:linear-gradient(100deg,rgba(255,255,255,.06) 30%,rgba(255,255,255,.34) 50%,rgba(255,255,255,.06) 70%);background-size:300% 100%;animation:shimmer 1.4s linear infinite;transition:background-color .5s}
+#dress i.done{animation:none;background:rgba(255,255,255,.88);border-color:var(--ink)}
+@keyframes shimmer{from{background-position:100% 0}to{background-position:-100% 0}}
+#dresslabel{position:absolute;left:0;right:0;top:calc(20vh + 12vw + 3vh);text-align:center;opacity:0;transition:opacity .6s}
+@media (prefers-reduced-motion: reduce){#dress i{animation:none}}
+.river{position:absolute;left:0;right:0;bottom:6vh;height:30vh;overflow:hidden}
+.river figure{position:absolute;bottom:0;height:100%;aspect-ratio:3/4;margin:0;animation:flow 5.2s linear forwards}
+.river img{width:100%;height:100%;object-fit:cover;border-radius:.8vw;box-shadow:0 1vw 2.4vw rgba(0,0,0,.4);display:block}
+.river figcaption{position:absolute;left:.8vw;bottom:.8vw;font-size:.66vw;letter-spacing:.2em;text-transform:uppercase;text-shadow:0 1px 6px #000}
+@keyframes flow{from{transform:translateX(104vw) rotate(var(--r))}to{transform:translateX(-30vw) rotate(var(--r))}}
+
+#note{position:fixed;top:4vw;right:2.6vw;z-index:5;opacity:0;transition:opacity .5s;text-shadow:0 1px 8px rgba(0,0,0,.7);pointer-events:none}
+#note.on{opacity:1}
+#s2{display:grid;grid-template-columns:repeat(3,1fr);gap:.25vw;background:var(--stage)}
+.pane{position:relative;overflow:hidden;transform:translateY(8%);opacity:0;transition:transform 1s cubic-bezier(.2,.7,.2,1),opacity 1s}
+#s2.on .pane{transform:none;opacity:1}
+#s2.on .pane:nth-child(2){transition-delay:.15s}#s2.on .pane:nth-child(3){transition-delay:.3s}
+.pane .bg{transition:transform 1.4s ease;background-position:center 20%}
+.pane:hover .bg{transform:scale(1.05)}
+.pane .cap{position:absolute;left:1.6vw;right:1.6vw;bottom:5vh;line-height:1.9;letter-spacing:.14em}
+.pane .why{color:var(--pick)}
+.pane .badge{position:absolute;left:1.6vw;top:4vw;opacity:0;transition:opacity .8s}
+.pane .badge.ready{opacity:1}
+#cam{position:absolute;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none}
+#s2 .script{position:absolute;left:0;right:0;top:56vh;text-align:center;font-size:8.5vw;pointer-events:none}
+#s2 .stat{position:absolute;right:2.6vw;top:4vw;text-shadow:0 1px 8px #000}
+
+#s3 .bg,#s4 .bg{animation:drift 14s ease-in-out infinite alternate;background-position:center 20%}
+@keyframes drift{from{transform:scale(1.02)}to{transform:scale(1.09)}}
+.tag{position:absolute;left:8vw;bottom:12vh;width:36vw;background:var(--paper);color:var(--navy);border-radius:1.2vw;padding:2.4vw 2.6vw;transform:rotate(-2deg) translateY(140%);transition:transform 1s cubic-bezier(.2,.7,.2,1) .3s;box-shadow:0 2vw 4vw rgba(0,0,0,.4)}
+#s3.on .tag{transform:rotate(-2deg)}
+.tag h4{font:400 2.6vw/1.1 "Instrument Serif","Hiragino Mincho ProN",serif;margin:0 0 1.4vw;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.kv{display:grid;grid-template-columns:repeat(4,auto);gap:.4vw 2vw;font-size:1.05vw;font-weight:500}
+.kv small{display:block;font-size:.6vw;letter-spacing:.2em;text-transform:uppercase;color:var(--label);font-weight:400}
+.fill{height:.25vw;background:var(--track);border-radius:1vw;margin-top:1.8vw;overflow:hidden}
+.fill i{display:block;height:100%;width:0;background:var(--navy)}
+.tag .tiny{margin-top:.9vw;color:var(--label);font-size:.62vw}
+#s3 .ask{position:absolute;right:6vw;bottom:14vh;max-width:34vw;font-size:2.4vw;line-height:1.2;text-align:right;text-shadow:0 2px 16px rgba(0,0,0,.6)}
+#s3 .ask span{color:var(--pick)}
+#s4 .script{position:absolute;left:6vw;top:22vh;font-size:11vw}
+#s4 .rem{position:absolute;left:6vw;bottom:10vh}
+</style></head><body>
+
+<div class="tiny" id="note"></div>
+<section class="stage" id="s0"><video class="bg hero" src="photos/hero-loop.mp4" poster="photos/hero.jpg" autoplay loop muted playsinline></video><div class="shade"></div>
+  <div class="script">Every look begins<br>long before you dress.</div>
+  <div class="talks"><div class="talk" data-g="women"><span class="ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><span class="tiny">Women</span></div><div class="talk" data-g="men"><span class="ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><span class="tiny">Men</span></div></div>
+  <div class="tiny hint">Tap one and say what you want</div></section>
+
+<section class="stage" id="s1"><div class="bg" style="background-image:url(photos/hero.jpg);filter:blur(14px) brightness(.5);transform:scale(1.1)"></div>
+  <div class="tiny tr" id="status">Listening</div>
+  <video id="cam" autoplay playsinline muted></video>
+  <div id="dress"><i></i><i></i><i></i></div><div class="tiny" id="dresslabel"></div>
+  <div class="river" id="river"></div></section>
+
+<section class="stage" id="s2">
+  <div class="pane" data-i="0"><div class="bg"></div><div class="shade"></div><div class="badge tiny">On you</div><div class="cap tiny"></div></div>
+  <div class="pane" data-i="1"><div class="bg"></div><div class="shade"></div><div class="badge tiny">On you</div><div class="cap tiny"></div></div>
+  <div class="pane" data-i="2"><div class="bg"></div><div class="shade"></div><div class="badge tiny">On you</div><div class="cap tiny"></div></div>
+  <div class="script">What to wear?</div></section>
+
+<section class="stage" id="s3"><div class="bg" id="bg3"></div><div class="shade"></div>
+  <div class="tiny tr">Held for 10 min · nothing bought yet</div>
+  <div class="ask serif" id="ask"></div>
+  <div class="tag"><h4 id="tname"></h4>
+    <div class="kv"><div><small>Shop</small><span id="tshop"></span></div><div><small>Color</small><span id="tcolor"></span></div><div><small>Size</small><span id="tsize"></span></div><div><small>Price</small><span id="tprice"></span></div></div>
+    <div class="fill"><i id="fill"></i></div><div class="tiny">Press and hold anywhere</div></div></section>
+
+<section class="stage" id="s4"><div class="bg" id="bg4"></div><div class="shade"></div>
+  <div class="tiny tr">Confirmed · remembered for next time</div>
+  <div class="script">See you Saturday.</div>
+  <div class="rem tiny" id="rem"></div></section>
+
+<script>
+const $=id=>document.getElementById(id);
+const yen=n=>"¥"+Number(n).toLocaleString();
+let stage=-1, picks=[], parsed={}, memory={}, chosen=null, size="M", color="", recog=null, queue=[], pump=null, typed="";
+function go(n){ const all=[...document.querySelectorAll(".stage")], prev=all[stage]; stage=n; all.forEach((s,i)=>{ s.classList.remove("under"); if(i!==n&&s!==prev) s.classList.remove("on"); });
+  if(prev&&prev!==all[n]){ prev.classList.remove("on"); prev.classList.add("under"); setTimeout(()=>prev.classList.remove("under"),1000); } all[n].classList.add("on"); }
+function say(text){ try{ const u=new SpeechSynthesisUtterance(text); u.lang="en-US"; u.rate=1.02; speechSynthesis.cancel(); speechSynthesis.speak(u);}catch{} }
+function listen(onText,onFinal){
+  const R=window.SpeechRecognition||window.webkitSpeechRecognition; if(!R) return null;
+  const r=new R(); r.lang="en-US"; r.interimResults=true; r.continuous=false; let last="", done=false;
+  r.onresult=e=>{ last=[...e.results].map(x=>x[0].transcript).join(""); onText(last); if(e.results[e.results.length-1].isFinal&&!done){done=true;onFinal(last)} };
+  r.onend=()=>{ if(!done&&last){done=true;onFinal(last)} };
+  try{r.start()}catch{} return r;
+}
+let selfie="", camStream=null, mine=[];
+async function startCamera(){
+  if(!navigator.mediaDevices) return;
+  selfie="";
+  try{ if(!camStream){ camStream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:640,facingMode:"user"}}); $("cam").srcObject=camStream; } watchFace(); }catch{}
+}
+function watchFace(){
+  const v=$("cam"), det=window.FaceDetector?new FaceDetector({fastMode:true,maxDetectedFaces:1}):null, t0=performance.now();
+  const loop=async()=>{ if(selfie||stage!==1) return; if(!v.videoWidth){ setTimeout(loop,150); return; }
+    let ok=!det&&performance.now()-t0>1200; if(det){ try{ ok=(await det.detect(v)).length>0 }catch{ ok=performance.now()-t0>1200 } }
+    if(ok) snap(); else setTimeout(loop,200); };
+  loop();
+}
+function snap(){ const v=$("cam"); if(!v.videoWidth) return; const s=Math.min(v.videoWidth,v.videoHeight), c=document.createElement("canvas"); c.width=c.height=512;
+  c.getContext("2d").drawImage(v,(v.videoWidth-s)/2,(v.videoHeight-s)/2,s,s,0,0,512,512); selfie=c.toDataURL("image/jpeg",.85); }
+async function tryOn(i){
+  const it=picks[i]; if(!selfie||!it) return;
+  try{ const r=await fetch("/api/tryon",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({selfie,img:it.img,name:it.name})}); if(!r.ok) return; const d=await r.json(); if(d.image&&picks[i]===it) mine[i]=d.image; }catch{}
+}
+async function dressThenShow(minWait){
+  mine=[]; if(!selfie) snap();
+  const started=performance.now(), fake=window.FAKE_DRESS;
+  if((selfie||fake)&&picks.length){
+    let done=0; const cards=[...$("dress").children]; cards.forEach((c,i)=>{ c.classList.remove("done"); c.hidden=i>=picks.length; });
+    const label=()=>$("dresslabel").textContent=`Dressing you · ${done} of ${picks.length}`; label();
+    $("status").textContent="Dressing you"; $("dress").classList.add("on"); $("dresslabel").classList.add("on");
+    const one=i=>(fake?new Promise(r=>setTimeout(r,1100+i*800)):tryOn(i)).then(()=>{ done++; cards[i].classList.add("done"); label(); });
+    await Promise.race([Promise.allSettled(picks.map((_,i)=>one(i))), new Promise(r=>setTimeout(r,45000))]);
+    await new Promise(r=>setTimeout(r,600));
+  }
+  setTimeout(()=>{ clearInterval(pump); $("dress").classList.remove("on"); $("dresslabel").classList.remove("on"); showPicks(); }, Math.max(0,minWait-(performance.now()-started)));
+}
+let wanted="";
+function startTalking(g){
+  wanted=typeof g==="string"?g:"";
+  startCamera();
+  typed=""; $("river").innerHTML=""; $("status").textContent="Listening"; go(1);
+  recog=listen(()=>{}, t=>search(t));
+}
+function search(q){
+  if(recog){try{recog.abort()}catch{} recog=null}
+  $("status").textContent="Searching live";
+  const t0=performance.now(); let shops=0, pieces=0, total=4, finished=false; queue=[];
+  let n=0; const seen=[]; clearInterval(pump);
+  pump=setInterval(()=>{ const i=n++; const it=queue.shift()||(seen.length?seen[i%seen.length]:null); if(!it) return; const f=document.createElement("figure"); f.style.setProperty("--r",((i%5)-2)*1.2+"deg");
+    const im=new Image(); im.referrerPolicy="no-referrer"; im.src=it.img; const c=document.createElement("figcaption"); c.textContent=it.shop+" · "+yen(it.price); f.append(im,c);
+    $("river").append(f); setTimeout(()=>f.remove(),5300); },330);
+  const es=new EventSource("/api/search?q="+encodeURIComponent(q)+"&g="+wanted);
+  es.addEventListener("parsed",e=>{ parsed=JSON.parse(e.data); memory=parsed.memory; total=parsed.shops; });
+  es.addEventListener("shop",e=>{ const d=JSON.parse(e.data); shops++; pieces+=d.items.length; const mixed=[...queue]; d.items.slice(0,10).forEach((it,k)=>{mixed.splice(Math.min(mixed.length,k*2),0,it); seen.push(it)}); queue=mixed; });
+  es.addEventListener("done",e=>{ const d=JSON.parse(e.data); es.close(); finished=(d.ms/1000).toFixed(1); picks=d.picks;
+    dressThenShow(Math.max(2600, 5200-d.ms)); });
+  es.onerror=()=>{ es.close(); $("status").textContent="Search failed · tap to try again"; };
+}
+function showPicks(){
+  if(!picks.length){ $("status").textContent="Nothing found · tap to try again"; return; }
+  document.querySelectorAll(".pane").forEach((p,i)=>{ const it=picks[i]; if(!it){p.style.visibility="hidden";return} p.style.visibility="";
+    p.querySelector(".bg").style.backgroundImage=`url("${mine[i]||it.img}")`; p.querySelector(".badge").classList.toggle("ready",!!mine[i]);
+    p.querySelector(".cap").innerHTML=`${it.name} · ${it.shop} · ${yen(it.price)}<br><span class="why">${it.why}</span>`; });
+  const auto=new URLSearchParams(location.search).get("auto"); if(auto){ setTimeout(()=>choose(0),1500); if(auto==="2") setTimeout(confirmBuy,4000); }
+  go(2); say(`I found ${picks.length} for you. ${picks.map(p=>p.why.split(" · ")[0]).join(". ")}.`);
+}
+function choose(i){
+  chosen=picks[i]; size=chosen.size||memory.size||"M"; color=parsed.colorEn||memory.color||"Black";
+  $("bg3").style.backgroundImage=$("bg4").style.backgroundImage=`url("${mine[i]||chosen.img}")`;
+  $("tname").textContent=chosen.name; $("tshop").textContent=chosen.shop; $("tcolor").textContent=color; $("tsize").textContent=size; $("tprice").textContent=yen(chosen.price);
+  $("fill").style.width=0; $("ask").innerHTML=`“${color} in ${size}, like last time?”`; go(3); say(`${color} in ${size}, like last time?`);
+  setTimeout(()=>{ if(stage!==3) return; recog=listen(()=>{}, t=>{ const m=t.toUpperCase().match(/EXTRA LARGE|EXTRA SMALL|XL|XS|SMALL|MEDIUM|LARGE|\bS\b|\bM\b|\bL\b/); const map={"EXTRA LARGE":"XL","EXTRA SMALL":"XS","SMALL":"S","MEDIUM":"M","LARGE":"L"};
+    if(m){ size=map[m[0]]||m[0]; $("tsize").textContent=size; }  }); },2200);
+}
+document.querySelectorAll(".pane").forEach(p=>p.addEventListener("click",e=>{e.stopPropagation();choose(+p.dataset.i)}));
+document.querySelectorAll(".talk").forEach(t=>t.addEventListener("click",e=>{e.stopPropagation();startTalking(t.dataset.g)}));
+$("s1").addEventListener("click",()=>{ if($("status").textContent.includes("tap")) startTalking(wanted); });
+let hold=null;
+$("s3").addEventListener("pointerdown",()=>{ const t0=performance.now(); hold=setInterval(()=>{ const r=Math.min(1,(performance.now()-t0)/1300); $("fill").style.width=r*100+"%"; if(r>=1){clearInterval(hold);hold=null;confirmBuy()} },30); });
+addEventListener("pointerup",()=>{ if(hold){clearInterval(hold);hold=null; if(stage===3) $("fill").style.width=0;} });
+function confirmBuy(){
+  if(recog){try{recog.abort()}catch{}}
+  fetch("/api/remember",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({name:chosen.name,shop:chosen.shop,price:chosen.price,size,color,budget:parsed.budget,})});
+  $("rem").textContent=`${chosen.name} · ${yen(chosen.price)} · Remembered: ${color}, size ${size}${parsed.budget?`, under ${yen(parsed.budget)}`:""}`;
+  go(4); say("Done. See you Saturday.");
+}
+$("s4").addEventListener("click",()=>go(0));
+addEventListener("keydown",e=>{ if(stage===0&&e.key.length===1){ startTalking(); if(recog){try{recog.abort()}catch{} recog=null} }
+  if(stage!==1) return; if(e.key==="Enter"&&typed){ search(typed); } else if(e.key==="Backspace"){ typed=typed.slice(0,-1); } else if(e.key.length===1&&!e.isComposing){ if(recog){try{recog.abort()}catch{} recog=null} typed+=e.key; } });
+let noteTimer=null;
+function note(text,stay){ $("note").textContent=text; $("note").classList.add("on"); clearTimeout(noteTimer); if(!stay) noteTimer=setTimeout(()=>$("note").classList.remove("on"),6000); }
+async function learn(url){
+  note("Learning this shop",true);
+  try{ const r=await fetch("/api/learn",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({url})}); const d=await r.json();
+    note(r.ok?`Learned ${d.shop} · ${d.pieces} pieces in ${(d.ms/1000).toFixed(1)} s · now searching ${d.total} shops`:d.error); }catch{ note("Could not reach the shop"); }
+}
+addEventListener("paste",e=>{ const t=(e.clipboardData.getData("text")||"").trim(); if(stage===0&&/^https?:\/\//.test(t)){ e.preventDefault(); learn(t); } });
+const q=new URLSearchParams(location.search).get("q");
+if(new URLSearchParams(location.search).get("dress")) window.FAKE_DRESS=true;
+const camTest=new URLSearchParams(location.search).get("cam");
+wanted=new URLSearchParams(location.search).get("g")||"";
+if(camTest){ go(1); startCamera(); if(q){ const t0=performance.now(); const wait=setInterval(()=>{ if(selfie||performance.now()-t0>20000){ clearInterval(wait); search(q); } },200); } } else if(q){ go(1); search(q); } else go(0);
+</script></body></html>
